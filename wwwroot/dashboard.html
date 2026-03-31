@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MishRooms - Web Chat</title>
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/chat.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <header class="sidebar-header">
+                <div class="branding">
+                    <img src="https://ui-avatars.com/api/?name=MishRooms&background=d63384&color=fff&rounded=true" alt="Logo" class="logo">
+                    <h2>MishRooms</h2>
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <div class="lang-switcher">
+                        <button class="lang-btn" id="langBtn" title="Change Language">
+                            <i class="fas fa-globe"></i>
+                        </button>
+                        <div class="lang-dropdown" id="langDropdown">
+                            <div class="lang-option" onclick="setLanguage('en')" id="lang-en">English</div>
+                            <div class="lang-option" onclick="setLanguage('de')" id="lang-de">Deutsch</div>
+                        </div>
+                    </div>
+                    <div class="menu-dropdown">
+                        <button id="menuBtn" class="icon-btn"><i class="fas fa-bars"></i></button>
+                        <div id="dropdownMenu" class="dropdown-content hidden">
+                            <a href="#" id="createGroupBtn" data-i18n="CreateGroup">Create Group</a>
+                            <a href="#" id="myProfileBtn" data-i18n="Profile">My Profile</a>
+                            <a href="#" id="logoutBtn" data-i18n="Logout">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search" data-i18n="Search"></i>
+                    <input type="text" id="searchInput" data-i18n="Search" placeholder="Search or start new chat">
+
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" id="tabUsers" data-i18n="UsersTab">Users</button>
+                <button class="tab-btn" id="tabGroups" data-i18n="GroupsTab">Groups</button>
+            </div>
+
+            <div class="chat-list" id="chatList">
+                <!-- Dynamically populated from JS -->
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="chat-area" id="chatArea">
+            <!-- Empty state when no chat is selected -->
+            <div class="empty-state" id="emptyState">
+                <img src="https://ui-avatars.com/api/?name=MR&background=f8d7e8&color=d63384&size=128&rounded=true" alt="Empty">
+                <h2 data-i18n="Welcome">MishRooms Web</h2>
+                <p data-i18n="LoginTitle">Send and receive messages in real-time.<br>Select a user or group to start chatting.</p>
+
+            </div>
+
+            <!-- Active chat structure (hidden until chat is selected) -->
+            <div class="active-chat hidden" id="activeChat">
+                <header class="chat-header">
+                    <div class="chat-header-info">
+                        <!-- Mobile back button -->
+                        <button class="icon-btn mobile-back" id="mobileBackBtn"><i class="fas fa-arrow-left"></i></button>
+                        <img id="activeChatAvatar" src="https://ui-avatars.com/api/?name=User&background=random&rounded=true" alt="Avatar" class="chat-avatar">
+                        <div class="chat-header-text">
+                            <h3 id="activeChatName">User Name</h3>
+                            <span id="activeChatStatus" class="status-online">Online</span>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <button class="icon-btn"><i class="fas fa-search"></i></button>
+                    </div>
+                </header>
+
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be injected here -->
+                </div>
+
+                <div class="typing-indicator hidden" id="typingIndicator">
+                    <span data-i18n="Username">user</span> is typing...
+                </div>
+
+
+                <footer class="chat-footer">
+                    <button class="icon-btn"><i class="far fa-smile"></i></button>
+                    <button class="icon-btn"><i class="fas fa-paperclip"></i></button>
+                    <input type="text" id="messageInput" data-i18n="TypeMessage" placeholder="Type a message">
+                    <button class="icon-btn" id="sendBtn" data-i18n="Send"><i class="fas fa-paper-plane"></i></button>
+
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Creation Modal -->
+    <div id="groupModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-i18n="CreateGroup">Create New Group</h2>
+
+                <span class="close-btn" id="closeGroupModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="groupNameInput" data-i18n="CreateGroup" placeholder="Group Name" class="modal-input">
+                <h3 data-i18n="Username">Select Participants</h3>
+
+                <div class="participant-list" id="participantList">
+                    <!-- Checkboxes populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="submitCreateGroup" class="primary-btn" data-i18n="CreateGroup">Create Group</button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal hidden">
+        <div class="modal-content text-center">
+            <span class="close-btn" id="closeProfileModal">&times;</span>
+            <h2 data-i18n="Profile">My Profile</h2>
+
+            <img id="myAvatar" src="https://ui-avatars.com/api/?name=Me&background=random&rounded=true" alt="My Avatar" class="profile-avatar">
+            <h3 id="myName">My Name</h3>
+            <p id="myStatus" class="status-online">Online</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script src="js/signalr-client.js"></script>
+    <script src="js/localization.js"></script>
+    <script src="js/chat.js"></script>
+
+</body>
+</html>
