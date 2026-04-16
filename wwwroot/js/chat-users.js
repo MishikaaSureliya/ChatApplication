@@ -19,11 +19,22 @@ async function loadUsers() {
             <span class="badge" id="badge-${u.userId}">0</span>
             <span class="status-dot" style="background:${u.isOnline ? 'green' : 'gray'}"></span>
         `;
-
-        div.onclick = () => {
-            window.location.href = `chat.html?receiverId=${u.userId}&user=${u.username}`;
-        };
-
         list.appendChild(div);
+    });
+    document.querySelectorAll(".user-item").forEach(item => {
+        item.addEventListener("click", function () {
+
+            const userId = this.getAttribute("data-userid");
+
+            console.log("Clicked ID:", userId);
+
+            // ✅ SAVE USER
+            localStorage.setItem("selectedUserId", userId);
+
+            console.log("Saved:", localStorage.getItem("selectedUserId"));
+
+            // redirect
+            window.location.href = `chat.html?receiverId=${userId}`;
+        });
     });
 }

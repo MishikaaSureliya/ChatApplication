@@ -80,7 +80,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // SignalR
 builder.Services.AddSignalR();
-builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -93,7 +92,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var path = context.HttpContext.Request.Path;
 
                 if (!string.IsNullOrEmpty(accessToken) &&
-                    path.StartsWithSegments("/chatHub"))
+                    (path.StartsWithSegments("/chatHub") || path.StartsWithSegments("/videoCallHub")))
                 {
                     context.Token = accessToken;
                 }
@@ -139,7 +138,7 @@ localizationOptions.RequestCultureProviders = new IRequestCultureProvider[]
 };
 
 app.UseRequestLocalization(localizationOptions);
-
+app.MapHub<VideoCallHub>("/videoCallHub");
 // Middleware
 app.UseCors("AllowAll");
 
@@ -187,5 +186,8 @@ app.MapControllers();
 
 // SignalR Hub
 app.MapHub<ChatHub>("/chatHub");
+
+app.Urls.Add("https://0.0.0.0:7062");
+app.Urls.Add("http://0.0.0.0:5004");
 
 app.Run();

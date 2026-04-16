@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://localhost:7062/api"; // Matches config.js API_BASE usually
+const API_BASE_URL = API_BASE;
 
 // State
 let allUsers = [];
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check Auth
     const token = getToken();
     if (!token) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 
@@ -159,7 +159,7 @@ async function fetchUsers() {
         const res = await fetch(API_BASE_URL + "/message/chat-users", { headers: authHeader() });
         if (res.status === 401) {
             localStorage.removeItem("token");
-            window.location.href = "login.html";
+            window.location.href = "index.html";
             return;
         }
         allUsers = await res.json();
@@ -201,6 +201,10 @@ function renderList(type) {
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=random&rounded=true`;
             let badgeHTML = u.unreadCount ? `<span class="badge">${u.unreadCount}</span>` : "";
 
+            if (u.unreadCount > 0) {
+                div.classList.add("unread");
+            }
+
             div.innerHTML = `
                 <div class="chat-item-avatar">
                     <img src="${avatarUrl}" alt="${u.username}">
@@ -228,6 +232,10 @@ function renderList(type) {
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(g.groupName)}&background=d63384&color=fff&rounded=true`;
             let badgeHTML = g.unreadCount ? `<span class="badge">${g.unreadCount}</span>` : "";
 
+            if (g.unreadCount > 0) {
+                div.classList.add("unread");
+            }
+
             div.innerHTML = `
                 <div class="chat-item-avatar">
                     <img src="${avatarUrl}" alt="${g.groupName}">
@@ -253,6 +261,10 @@ function renderList(type) {
 // ----------------------------------------------------
 async function openChat(type, id, name, isOnline = false) {
     // Leave previous group if applicable
+    if (type === "user") {
+        localStorage.setItem("selectedUserId", id);
+        console.log("Saved from openChat:", id);
+    }
     if (activeChatObj && activeChatObj.type === "group" && typeof leaveGroupRealTime === 'function') {
         leaveGroupRealTime(activeChatObj.id);
     }
@@ -268,6 +280,10 @@ async function openChat(type, id, name, isOnline = false) {
     // Update UI elements
     document.getElementById("emptyState").classList.add("hidden");
     document.getElementById("activeChat").classList.remove("hidden");
+    
+    // Slide in on mobile devices
+    const chatArea = document.getElementById("chatArea");
+    if (chatArea) chatArea.classList.add("active");
     
     document.getElementById("activeChatName").textContent = name;
     
@@ -427,18 +443,34 @@ window.onIncomingMessage = function(senderId, senderName, message, timestamp, is
     }
 
     if (!isMine && senderId) {
-        // Bump Unread count
-        const user = allUsers.find(u => u.userId == senderId);
-        if (user) {
-            user.unreadCount = (user.unreadCount || 0) + 1;
-            if (document.getElementById("tabUsers").classList.contains("active")) {
-                renderList("users"); // re-render sidebar to show badge
+        // Bump Unread count if not active chat
+        if (!(activeChatObj && activeChatObj.type === "user" && activeChatObj.id == senderId)) {
+            const user = allUsers.find(u => u.userId == senderId);
+            if (user) {
+                user.unreadCount = (user.unreadCount || 0) + 1;
+                if (document.getElementById("tabUsers").classList.contains("active")) {
+                    renderList("users"); // re-render sidebar to show badge
+                }
             }
         }
         
         if (Notification.permission === 'granted') {
             new Notification("New Message from " + senderName, { body: message });
         }
+    }
+};
+
+window.onUnreadMessage = function (senderId) {
+    // This is called when a notification record is created but we didn't necessarily get the message text via ReceiveMessage (or we did)
+    // Actually, onIncomingMessage already handles the count bump.
+    // But sometimes we might just get the notification event.
+    // Let's ensure consistency.
+    const user = allUsers.find(u => u.userId == senderId);
+    if (user && !(activeChatObj && activeChatObj.type === "user" && activeChatObj.id == senderId)) {
+        // Only increment if we haven't already or if we want to be sure.
+        // Usually ReceiveMessage is enough for real-time.
+        // fetchUsers() would also work but it's expensive.
+        // For now, onIncomingMessage is doing the work.
     }
 };
 

@@ -17,8 +17,21 @@ function login() {
             return response.json();
         })
         .then(data => {
-            const token = data.token || data.Token;
+            console.log("LOGIN RESPONSE:", data);
+
+            const token = data.token || data.Token || data.result?.token;
+
+            console.log("Extracted Token:", token);
+              
+            if (!token) {
+                alert("Token not found ❌");
+                return;
+            }
+
             localStorage.setItem("token", token);
+
+            alert("Token saved ✅");
+
             window.location.href = "dashboard.html";
         });
 }

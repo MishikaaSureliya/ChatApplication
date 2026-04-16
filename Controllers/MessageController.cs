@@ -79,13 +79,17 @@ namespace ChatApplication.Controllers
             _context.SaveChanges();
 
             // Send real-time message
-            var senderName = User.Identity.Name;
+            var senderName = User.Identity?.Name ?? "User";
 
             await _hubContext.Clients.User(model.ReceiverId.ToString())
                 .SendAsync("ReceiveMessage", senderId, senderName, model.MessageText, message.Timestamp);
 
             await _hubContext.Clients.User(senderId.ToString())
                 .SendAsync("ReceiveOwnMessage", model.ReceiverId, model.MessageText, message.Timestamp);
+
+            // Notify about unread message
+            await _hubContext.Clients.User(model.ReceiverId.ToString())
+                .SendAsync("UnreadMessage", senderId);
 
             return Ok(message);
         }
@@ -131,7 +135,14 @@ namespace ChatApplication.Controllers
             _context.SaveChanges();
 
             await _hubContext.Clients.Group(model.GroupId.ToString())
-                .SendAsync("ReceiveGroupMessage", senderName, model.MessageText, message.Timestamp);
+                .SendAsync("ReceiveGroupMessage", model.GroupId, senderId, senderName, model.MessageText, message.Timestamp);
+
+            // Notify members about unread group message
+            foreach (var memberId in otherMembers)
+            {
+                await _hubContext.Clients.User(memberId.ToString())
+                    .SendAsync("GroupUnreadMessage", model.GroupId);
+            }
 
             return Ok(message);
         }

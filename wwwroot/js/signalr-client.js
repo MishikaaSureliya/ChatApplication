@@ -31,6 +31,21 @@ async function initSignalR() {
         }
     });
 
+    // Event: Receive Private Message
+    chatConnection.on("ReceiveMessage", function (senderId, senderName, message, timestamp) {
+        console.log("Private message received:", message);
+        if (window.onIncomingMessage) {
+            window.onIncomingMessage(senderId, senderName, message, timestamp, false);
+        }
+    });
+
+    // Event: Unread Message Notification
+    chatConnection.on("UnreadMessage", function (senderId) {
+        if (window.onUnreadMessage) {
+            window.onUnreadMessage(senderId);
+        }
+    });
+
 
     // Event: Receive Our Own Message (so it shows up across our devices)
     chatConnection.on("ReceiveOwnMessage", function (receiverId, message, timestamp) {

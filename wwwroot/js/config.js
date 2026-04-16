@@ -1,5 +1,7 @@
-﻿const API_BASE = "https://localhost:7062/api";
-const HUB_URL = "https://localhost:7062/chatHub";
+const BASE_URL = window.location.origin;
+
+window.API_BASE = BASE_URL + "/api";
+window.HUB_URL = BASE_URL + "/chatHub";
 
 function getToken() {
     return localStorage.getItem("token");

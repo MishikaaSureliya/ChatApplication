@@ -1,5 +1,4 @@
 function register() {
-    debugger;
     let username = document.getElementById("regUsername").value;
     let email = document.getElementById("regEmail").value;
     let password = document.getElementById("regPassword").value;

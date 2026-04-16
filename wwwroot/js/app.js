@@ -1,12 +1,11 @@
-const API_URL = "https://localhost:7062/api";
+const API_URL = window.location.origin + "/api";
 
 // ================= LOGIN =================
 function login() {
-    debugger;
     let username = document.getElementById("username").value;
     let password = document.getElementById("password").value;
 
-    fetch("https://localhost:7062/api/Auth/login", {
+    fetch(API_URL + "/Auth/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -73,7 +72,7 @@ function register() {
 
 // ================= DASHBOARD USERS =================
 function loadUsers() {
-    fetch("https://localhost:5001/api/user/all")
+    fetch(API_URL + "/user/all")
         .then(res => res.json())
         .then(users => {
             let list = document.getElementById("list");
@@ -210,7 +209,7 @@ window.onload = function () {
 function loadGroups() {
     let token = localStorage.getItem("token");
 
-    fetch("https://localhost:7062/api/group/my-groups", {
+    fetch(API_URL + "/group/my-groups", {
         method: "GET",
         headers: {
             "Authorization": "Bearer " + token

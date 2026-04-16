@@ -7,6 +7,7 @@
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/chat.css">
+   
 </head>
 <body>
     <div class="app-container">
@@ -37,7 +38,7 @@
                     </div>
                 </div>
             </header>
-            
+
             <div class="search-bar">
                 <div class="search-input-wrapper">
                     <i class="fas fa-search" data-i18n="Search"></i>
@@ -79,7 +80,12 @@
                         </div>
                     </div>
                     <div class="chat-header-actions">
-                        <button class="icon-btn"><i class="fas fa-search"></i></button>
+                        <button class="icon-btn" id="callBtn">
+                            <i class="fas fa-video"></i>
+                        </button>
+                        <button class="icon-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </div>
                 </header>
 
@@ -144,6 +150,27 @@
     <script src="js/signalr-client.js"></script>
     <script src="js/localization.js"></script>
     <script src="js/chat.js"></script>
+    <script src="js/videoCall.js"></script>
 
+    <div id="videoCallContainer" class="hidden">
+        <div class="video-wrapper">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="localVideo" autoplay muted playsinline class="local-small"></video>
+
+            <button id="endCallBtn" class="end-call-btn">
+                ❌ End Call
+            </button>
+        </div>
+    </div>
+    <div id="incomingCallPopup" class="hidden incoming-call">
+        <div class="call-box">
+            <h3 id="callerName">Incoming Call...</h3>
+
+            <div class="call-actions">
+                <button id="acceptCallBtn" class="accept">Accept</button>
+                <button id="rejectCallBtn" class="reject">Reject</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Security.Claims;
 
 namespace ChatApplication
 {
@@ -7,7 +6,7 @@ namespace ChatApplication
     {
         public string GetUserId(HubConnectionContext connection)
         {
-            return connection.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return connection.GetHttpContext().Request.Query["userId"];
         }
     }
 }
