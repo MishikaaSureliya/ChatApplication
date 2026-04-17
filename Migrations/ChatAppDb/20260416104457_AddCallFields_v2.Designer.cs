@@ -4,16 +4,19 @@ using ChatApplication.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ChatApplication.Migrations
+namespace ChatApplication.Migrations.ChatAppDb
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(ChatAppDbContext))]
+    [Migration("20260416104457_AddCallFields_v2")]
+    partial class AddCallFields_v2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,22 +37,26 @@ namespace ChatApplication.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("GroupName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool?>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
-                    b.HasKey("GroupId");
+                    b.HasKey("GroupId")
+                        .HasName("PK__Groups__149AF36A1DE14CB3");
 
                     b.ToTable("Groups");
                 });
@@ -66,27 +73,32 @@ namespace ChatApplication.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
                     b.Property<bool?>("IsAdmin")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<bool?>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("PK__GroupMem__3214EC07E69A1856");
 
                     b.ToTable("GroupMembers");
                 });
@@ -147,21 +159,16 @@ namespace ChatApplication.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("GroupId")
                         .HasColumnType("int");
 
                     b.Property<bool?>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsSeen")
                         .HasColumnType("bit");
@@ -179,9 +186,7 @@ namespace ChatApplication.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("Timestamp")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -287,7 +292,10 @@ namespace ChatApplication.Migrations
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("User");
 
                     b.Property<string>("UpdatedBy")
                         .HasMaxLength(100)
@@ -303,6 +311,12 @@ namespace ChatApplication.Migrations
 
                     b.HasKey("UserId")
                         .HasName("PK__UserRegi__1788CC4C5238D5C9");
+
+                    b.HasIndex(new[] { "Email" }, "UQ_User_Email")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "Username" }, "UQ_User_Username")
+                        .IsUnique();
 
                     b.ToTable("UserRegister", (string)null);
                 });

@@ -14,6 +14,8 @@ public partial class Message
     public int? GroupId { get; set; }
 
     public string? MessageText { get; set; }
+    public string? MessageType { get; set; } = "Text";
+    public int? CallDuration { get; set; }
 
     public DateTime? Timestamp { get; set; }
 

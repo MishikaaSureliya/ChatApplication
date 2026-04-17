@@ -67,7 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // ❌ END CALL
     endBtn?.addEventListener("click", () => {
         if (targetUserId) {
-            connection.invoke("EndCall", targetUserId).catch(console.error);
+            let duration = 0;
+            if (window.callStartTime) {
+                duration = Math.floor((Date.now() - window.callStartTime) / 1000);
+            }
+            connection.invoke("EndCall", targetUserId, duration).catch(console.error);
         }
         endCallUI();
     });
@@ -75,9 +79,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // ✅ ACCEPT CALL
     document.getElementById("acceptCallBtn")?.addEventListener("click", async () => {
         document.getElementById("incomingCallPopup").classList.add("hidden");
+        
+        if (window.activeRingtone) {
+            window.activeRingtone.pause();
+            window.activeRingtone = null;
+        }
 
         window.isInCall = true;
         targetUserId = window.callerId;
+
+        // Remove highlight
+        document.querySelectorAll(".calling-highlight").forEach(el => el.classList.remove("calling-highlight"));
 
         document.getElementById("videoCallContainer").classList.remove("hidden");
 
@@ -95,15 +107,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
 
+        window.callStartTime = Date.now();
         connection.invoke("SendAnswer", targetUserId, JSON.stringify(answer)).catch(console.error);
     });
 
     // ❌ REJECT CALL
     document.getElementById("rejectCallBtn")?.addEventListener("click", () => {
         document.getElementById("incomingCallPopup").classList.add("hidden");
-
-        connection.invoke("RejectCall", window.callerId).catch(console.error);
         
+        if (window.activeRingtone) {
+            window.activeRingtone.pause();
+            window.activeRingtone = null;
+        }
+
+        connection.invoke("RejectCall", window.callerId, "Rejected").catch(console.error);
+        
+        // Remove highlight
+        document.querySelectorAll(".calling-highlight").forEach(el => el.classList.remove("calling-highlight"));
+
         targetUserId = null;
         window.callerId = null;
         window.incomingOffer = null;
@@ -219,9 +240,20 @@ function createPeerConnection() {
 connection.on("ReceiveOffer", async (callerId, offer, callerName) => {
     console.log("🔥 ReceiveOffer triggered from", callerName);
     
+    // Highlight the caller in the sidebar
+    const userItems = document.querySelectorAll(".chat-item");
+    userItems.forEach(item => {
+        // Assuming the ID is stored somewhere or we can match by name if ID isn't easily accessible
+        // In chat.js, onclick is openChat('user', u.userId...). We can try to find the item.
+        if (item.innerText.includes(callerName)) {
+            item.classList.add("calling-highlight");
+        }
+    });
+
     if (window.isInCall) {
+        console.log("🚫 User is already in a call. Sending Busy status.");
         // Busy
-        connection.invoke("RejectCall", callerId).catch(console.error);
+        connection.invoke("RejectCall", callerId, "Busy").catch(console.error);
         return;
     }
 
@@ -229,14 +261,25 @@ connection.on("ReceiveOffer", async (callerId, offer, callerName) => {
     window.incomingOffer = offer;
     window.callerId = callerId;
     
-    document.getElementById("callerName").innerText = "Incoming Call from " + (callerName || "User") + "...";
-    document.getElementById("incomingCallPopup").classList.remove("hidden");
+    const popup = document.getElementById("incomingCallPopup");
+    const callerNameEl = document.getElementById("callerName");
+    
+    if (callerNameEl) callerNameEl.innerHTML = `<span class='highlight-name'>${callerName || "User"}</span> is calling you...`;
+    if (popup) popup.classList.remove("hidden");
+    
+    // Play a ringtone if possible (optional, but good for mobile)
+    try {
+        const ringtone = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+        ringtone.play().catch(() => console.log("Autoplay blocked ringtone"));
+        window.activeRingtone = ringtone;
+    } catch(e) {}
 });
 
 
 // ================= RECEIVE ANSWER =================
 connection.on("ReceiveAnswer", async (answer) => {
     if (peerConnection && peerConnection.signalingState !== "closed") {
+        window.callStartTime = Date.now();
         await peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
         
         while (candidateQueue.length > 0) {
@@ -259,9 +302,13 @@ connection.on("ReceiveIceCandidate", async (candidate) => {
 
 
 // ================= CALL REJECTED =================
-connection.on("CallRejected", () => {
-    console.log("📴 Call was rejected");
-    alert("The user is busy or rejected the call.");
+connection.on("CallRejected", (reason) => {
+    console.log("📴 Call was rejected. Reason:", reason);
+    if (reason === "Busy") {
+        alert("The user is currently busy in another call.");
+    } else {
+        alert("The user rejected the call.");
+    }
     endCallUI();
 });
 
@@ -272,10 +319,18 @@ connection.on("CallEnded", () => {
     endCallUI();
 });
 
+// ================= CALL NOTIFICATION =================
+connection.on("ReceiveCallNotification", (msg) => {
+    if (window.onReceiveCallNotification) {
+        window.onReceiveCallNotification(msg);
+    }
+});
+
 
 // ================= END CALL =================
 function endCallUI() {
     window.isInCall = false;
+    window.callStartTime = null;
     targetUserId = null;
 
     // Reset popup

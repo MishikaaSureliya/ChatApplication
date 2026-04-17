@@ -343,6 +343,11 @@ body {
     display: inline-block;
 }
 
+.badge-missed {
+    background-color: #ff4d4f;
+    margin-left: 5px;
+}
+
 /* Chat Header */
 .chat-header {
     display: flex;
@@ -790,16 +795,153 @@ body {
     cursor: pointer;
 }
 
-@media (max-width: 768px) {
-    .local-small {
-        width: 100px;
-        height: 75px;
-        bottom: 90px;
-        right: 15px;
+/* System / Call Notification Messages */
+.message-system {
+    align-self: center;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 8px 15px;
+    border-radius: 20px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+    width: fit-content;
+}
+
+.system-time {
+    font-size: 0.7rem;
+    margin-top: 4px;
+    opacity: 0.8;
+}
+
+/* Calling Highlight Pulse */
+.calling-highlight {
+    background-color: #ffe3ec !important;
+    border-left: 5px solid var(--primary) !important;
+    animation: callPulse 1.5s infinite;
+}
+
+@keyframes callPulse {
+    0% { background-color: #ffe3ec; }
+    50% { background-color: #ffb3d1; }
+    100% { background-color: #ffe3ec; }
+}
+
+/* Incoming Call Popup Styles */
+.incoming-call {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+}
+
+.call-box {
+    background: #1a1a1a;
+    color: white;
+    padding: 30px;
+    border-radius: 20px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    border: 1px solid #333;
+}
+
+.highlight-name {
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 1.2rem;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.call-actions {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.call-actions button {
+    padding: 12px 25px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: transform 0.2s, background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.call-actions button:hover {
+    transform: scale(1.05);
+}
+
+.accept {
+    background: #25d366;
+    color: white;
+}
+
+.accept:hover {
+    background: #20bd5c;
+}
+
+.reject {
+    background: #ff4d4f;
+    color: white;
+}
+
+    .end-call-btn {
+        bottom: 40px;
+        width: 80%;
+    }
+
+    .badge-missed {
+        background-color: #ff4d4f !important;
+        box-shadow: 0 0 5px rgba(255, 77, 79, 0.5);
+    }
+    
+    .missed-call .chat-item-name {
+        color: #ff4d4f;
+    }
+}
+
+/* Missed Call Badge Global */
+.badge-missed {
+    background-color: #ff4d4f;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.badge-missed i {
+    font-size: 0.7rem;
+}
+
+.missed-call .chat-item-name {
+    color: #ff4d4f;
+}
+    
+    .end-call-btn {
+        bottom: 40px;
+        width: 80%;
     }
 
     .call-box {
         width: 90vw;
         max-width: 320px;
+    }
+
+    .system-text {
+        font-weight: 500;
     }
 }

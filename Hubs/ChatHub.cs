@@ -136,10 +136,11 @@ namespace ChatApplication.Hubs
         // ================= TYPING =================
         public async Task Typing(int receiverId)
         {
-            var senderId = Context.UserIdentifier;
+            var senderId = GetCurrentUserId();
+            var senderName = GetCurrentUsername();
 
             await Clients.User(receiverId.ToString())
-                .SendAsync("UserTyping", senderId);
+                .SendAsync("UserTyping", senderId.ToString(), senderName);
         }
 
         // ================= GROUP =================

@@ -40,7 +40,13 @@ namespace ChatApplication.Controllers
                     u.UserId,
                     u.Username,
                     u.IsOnline,
-                    UnreadCount = _context.Notifications.Count(n => n.UserId == currentUserId && n.Message.SenderId == u.UserId && n.IsRead == false)
+                    UnreadCount = _context.Notifications.Count(n => n.UserId == currentUserId && n.Message.SenderId == u.UserId && n.IsRead == false),
+                    MissedCallCount = _context.Messages.Count(m => m.ReceiverId == currentUserId && m.SenderId == u.UserId && m.MessageType == "MissedCall" && m.IsSeen == false),
+                    LastMessage = _context.Messages
+                        .Where(m => (m.SenderId == currentUserId && m.ReceiverId == u.UserId) || (m.SenderId == u.UserId && m.ReceiverId == currentUserId))
+                        .OrderByDescending(m => m.Timestamp)
+                        .Select(m => m.MessageText)
+                        .FirstOrDefault()
                 })
                 .ToList();
 
@@ -182,6 +188,7 @@ namespace ChatApplication.Controllers
                     senderId = m.SenderId,
                     receiverId = m.ReceiverId,
                     m.MessageText,
+                    m.MessageType,
                     m.Timestamp,
                     senderUsername = m.User.Username
                 })

@@ -63,9 +63,9 @@ async function initSignalR() {
     });
 
     // Event: User Typing
-    chatConnection.on("UserTyping", function (senderId) {
+    chatConnection.on("UserTyping", function (senderId, senderName) {
         if (window.onUserTypingChanged) {
-            window.onUserTypingChanged(senderId);
+            window.onUserTypingChanged(senderId, senderName);
         }
     });
 

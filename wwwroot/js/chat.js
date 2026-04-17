@@ -21,6 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
         initSignalR();
     }
 
+    // Request Notification Permission
+    if ("Notification" in window) {
+        Notification.requestPermission();
+    }
+
     // Bind UI elements
     bindEvents();
 
@@ -147,7 +152,10 @@ function bindEvents() {
     sendBtn.addEventListener("click", sendMessage);
     messageInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") sendMessage();
-        else sendTyping(); // Realtime typing indicator
+    });
+    
+    messageInput.addEventListener("input", () => {
+        sendTyping(); // Realtime typing indicator
     });
 }
 
@@ -200,6 +208,12 @@ function renderList(type) {
 
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=random&rounded=true`;
             let badgeHTML = u.unreadCount ? `<span class="badge">${u.unreadCount}</span>` : "";
+            
+            // Add missed call indicator
+            if (u.missedCallCount > 0) {
+                badgeHTML += `<span class="badge badge-missed" title="Missed Calls"><i class="fa fa-phone-slash"></i> ${u.missedCallCount} Call</span>`;
+                div.classList.add("missed-call");
+            }
 
             if (u.unreadCount > 0) {
                 div.classList.add("unread");
@@ -211,7 +225,7 @@ function renderList(type) {
                 </div>
                 <div class="chat-item-info">
                     <div class="chat-item-name">${u.username}</div>
-                    <div class="chat-item-preview">${u.email || 'Click to chat'}</div>
+                    <div class="chat-item-preview">${u.lastMessage || u.email || 'Click to chat'}</div>
                 </div>
                 <div class="chat-item-meta">
                     ${badgeHTML}
@@ -342,7 +356,7 @@ async function openChat(type, id, name, isOnline = false) {
             const msgs = await res.json();
             msgs.forEach(m => {
                 const isSentByMe = (m.senderId != id); // if sender is not the receiver, it's me
-                appendMessageToUI(isSentByMe ? "Me" : m.senderUsername, m.messageText, m.timestamp, isSentByMe);
+                appendMessageToUI(isSentByMe ? "Me" : m.senderUsername, m.messageText, m.timestamp, isSentByMe, m.messageType);
             });
         } catch(e) { console.error("Error fetching history", e); }
     } else {
@@ -409,18 +423,27 @@ function sendTyping() {
     }
 }
 
-function appendMessageToUI(sender, text, timestamp, isMine) {
+function appendMessageToUI(sender, text, timestamp, isMine, messageType = "Text") {
     const el = document.getElementById("chatMessages");
     const wrapper = document.createElement("div");
-    wrapper.className = isMine ? "message-bubble message-sent" : "message-bubble message-received";
-    
+
     const timeFormatted = timestamp ? new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
 
-    wrapper.innerHTML = `
-        <div class="message-sender">${sender}</div>
-        <div class="message-text">${text}</div>
-        <div class="message-time">${timeFormatted}</div>
-    `;
+    // Special rendering for call notifications
+    if (messageType === "CallStarted" || messageType === "CallEnded" || messageType === "MissedCall") {
+        wrapper.className = "message-system";
+        wrapper.innerHTML = `
+            <div class="system-text">${text}</div>
+            <div class="system-time">${timeFormatted}</div>
+        `;
+    } else {
+        wrapper.className = isMine ? "message-bubble message-sent" : "message-bubble message-received";
+        wrapper.innerHTML = `
+            <div class="message-sender">${sender}</div>
+            <div class="message-text">${text}</div>
+            <div class="message-time">${timeFormatted}</div>
+        `;
+    }
 
     el.appendChild(wrapper);
     el.scrollTop = el.scrollHeight;
@@ -514,16 +537,53 @@ window.onUserStatusChanged = function(userId, isOnline) {
     }
 };
 
-window.onUserTypingChanged = function(senderId) {
+window.onUserTypingChanged = function(senderId, senderName) {
     if (activeChatObj && activeChatObj.type === "user" && activeChatObj.id == senderId) {
         const ind = document.getElementById("typingIndicator");
-        ind.classList.remove("hidden");
-        clearTimeout(window.typingTimer);
-        window.typingTimer = setTimeout(() => {
-            ind.classList.add("hidden");
-        }, 2000);
+        if (ind) {
+            ind.textContent = (senderName || "Someone") + " is typing...";
+            ind.classList.remove("hidden");
+            clearTimeout(window.typingTimer);
+            window.typingTimer = setTimeout(() => {
+                ind.classList.add("hidden");
+            }, 2000);
+        }
     }
 };
+
+window.onReceiveCallNotification = function(msg) {
+    // Refresh the user list to update missed call counts and previews
+    fetchUsers();
+
+    // Browser Notification for missed call - ONLY for the receiver
+    if (msg.messageType === "MissedCall" && msg.receiverId == currentUser.id) {
+        showBrowserNotification("Missed Call", `You missed a call from ${msg.senderName || 'someone'}`);
+    }
+
+    // If we're chatting with this user right now
+    if (activeChatObj && activeChatObj.type === "user") {
+        if (msg.senderId == activeChatObj.id || msg.receiverId == activeChatObj.id) {
+            // isMine means I am the one who sent this system message (e.g. I ended the call)
+            const isMine = (msg.senderId == currentUser.id);
+            appendMessageToUI(isMine ? "Me" : activeChatObj.name, msg.messageText, msg.timestamp, isMine, msg.messageType);
+            
+            // Mark as seen immediately if the chat is open
+            if (!isMine && typeof markAsSeenRealTime === 'function') {
+                markAsSeenRealTime(msg.senderId);
+            }
+            return;
+        }
+    }
+};
+
+function showBrowserNotification(title, body) {
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+            body: body,
+            icon: "https://ui-avatars.com/api/?name=MR&background=d63384&color=fff&rounded=true"
+        });
+    }
+}
 
 // ----------------------------------------------------
 // Group Creation
